@@ -1,6 +1,8 @@
 package subexp
 
-import "regexp"
+import (
+	"regexp"
+)
 
 /*
 Groups contains the sub-expressions "captured" when matching text has
@@ -10,7 +12,7 @@ be accessed by name or index.
 */
 type Groups struct {
 	s  []string
-	lu map[string]int
+	lu map[string][]string
 }
 
 /*
@@ -25,9 +27,14 @@ func Capture(re *regexp.Regexp, text string) *Groups {
 		return nil
 	}
 
-	lu := map[string]int{}
+	lu := map[string][]string{}
+
 	for i, n := range re.SubexpNames() {
-		lu[n] = i
+		if _, ok := lu[n]; !ok {
+			lu[n] = []string{}
+		}
+
+		lu[n] = append(lu[n], s[i])
 	}
 
 	return &Groups{
@@ -86,9 +93,13 @@ ByIndex returns the captured group (string) by index counting from left
 to right.  By conventsion, index zero represents the entire matched text, so
 index one would be the first captured group.
 */
-func (g Groups) ByIndex(i int) string {
-	// TODO: add error checking
-	return g.s[i]
+func (g Groups) ByIndex(i int) (string, error) {
+	err := boundsCheck(g.s, i)
+	if err != nil {
+		return "", err
+	}
+
+	return g.s[i], nil
 }
 
 /*
@@ -97,8 +108,30 @@ the evaluation of the captured groups, this method currently returns the
 last capture group with the provide name if the name is repeated.  This
 behavior will be changing shortly.
 */
-func (g Groups) ByName(name string) string {
-	// TODO: add error checking
-	// TODO: split into FirstByName and AllByName
-	return g.ByIndex(g.lu[name])
+func (g Groups) AllByName(name string) ([]string, error) {
+	err := keyCheck(g.lu, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return g.lu[name], nil
+}
+
+/*
+FirstByName returns the text of the first capture group with the specified
+name or an error if the name is unknown, or there is no text associated
+with the provided name.
+*/
+func (g Groups) FirstByName(name string) (string, error) {
+	n, err := g.AllByName(name)
+	if err != nil {
+		return "", err
+	}
+
+	err = textCheck(n, name)
+	if err != nil {
+		return "", err
+	}
+
+	return n[0], nil
 }
