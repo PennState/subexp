@@ -7,60 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type test struct {
-	name     string
-	expr     string
-	text     string
-	err      error
-	panicked bool
-}
-
-type Permutator func([]struct{})
-
-func Permutate(trgt []struct{}, fns []Permutator) {
-	for _, fn := range fns {
-		fn(trgt)
-	}
-}
-
-func TestPermutator(t *testing.T) {
-	assert.True(t, true)
-	// fns := []Permutator{
-	// 	func(s []struct{}) {
-	// 		s = append(s, test{name: "A"})
-	// 		s = append(s, test{name: "B"})
-	// 	},
-	// 	func(s []struct{}) {
-
-	// 	},
-	// }
-}
-
-// expr * POSIX * constructor * compiles * matches
-
-// func tests() []test {
-// 	return []test{
-// 		{"Valid expression - no match", "", ""},
-// 		{"Valid expression - 3 matches", "", ""},
-// 	}
-// }
-
 func adaptPanicSignature(fn func(expr, text string) *subexp.Groups) func(expr, text string) (*subexp.Groups, error) {
 	return func(expr, text string) (*subexp.Groups, error) {
 		return fn(expr, text), nil
 	}
 }
 
-func TestCompileAnCapture(t *testing.T) {
-	tests := []struct {
-		name   string
-		expr   string
-		text   string
-		exp    map[string][]string
-		panics bool
-		errs   bool
-		fn     func(expr, text string) (*subexp.Groups, error)
-	}{
+type test struct {
+	name   string
+	expr   string
+	text   string
+	exp    map[string][]string
+	panics bool
+	errs   bool
+	fn     func(expr, text string) (*subexp.Groups, error)
+}
+
+func getTests() []test {
+	return []test{
 		{
 			name: "CompileAndCapture - works",
 			expr: "^(?P<a>[0-9]) (?P<a>[0-9]) (?P<b>[0-9])(?: (?P<c>[0-9]))?$",
@@ -113,7 +77,10 @@ func TestCompileAnCapture(t *testing.T) {
 			fn:     adaptPanicSignature(subexp.MustCompileAndCapturePOSIX),
 		},
 	}
+}
 
+func TestCompileAnCapture(t *testing.T) {
+	tests := getTests()
 	for i := range tests {
 		test := tests[i]
 		t.Run(test.name, func(t *testing.T) {
@@ -181,14 +148,3 @@ func TestCompileAnCapture(t *testing.T) {
 		})
 	}
 }
-
-// func TestNameUnknown(t *testing.T) {
-// 	m := map[string][]string{
-// 		"a": {"1", "2", "3"},
-// 		"b": {"2", "3", "4"},
-// 		"c": {"3", "4", "5"},
-// 	}
-
-// 	t.Log("UnknownName", m["d"])
-// 	t.Fail()
-// }
