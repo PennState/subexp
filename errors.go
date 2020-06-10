@@ -13,7 +13,7 @@ type IndexError struct {
 }
 
 func boundsCheck(v interface{}, i int) error {
-	len := reflect.TypeOf(v).Len() // panics if v is not an array
+	len := reflect.ValueOf(v).Len() // panics if v is not an array
 
 	if i < 0 || i > len-1 {
 		return IndexError{
@@ -56,7 +56,7 @@ type NoTextError struct {
 }
 
 func textCheck(v []string, k string) error {
-	if len(v) < 1 {
+	if len(v) < 1 || len(v[0]) == 0 {
 		return NoTextError{
 			Key: k,
 		}
